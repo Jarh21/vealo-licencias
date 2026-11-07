@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso Administrativo | Grupo Vealo</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              900: '#133E36',
+              dark: '#0c2722'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    h1 {
+      font-size: 1.875rem;
+      line-height: 1.25;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      line-height: 1.35;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      ::before,
+      ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="min-h-screen bg-slate-100 flex items-center justify-center p-4 selection:bg-emerald-100 selection:text-emerald-900">
+
+  <div class="max-w-md w-full">
+    <!-- LOGO / CABECERA -->
+    <div class="text-center mb-8">
+      <div
+        class="w-16 h-16 rounded-2xl bg-brand-900 text-emerald-400 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xl shadow-brand-900/20">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">GRUPO VEALO</h1>
+      <p class="text-sm text-slate-500 mt-1">Panel de Control de Licencias Administrativas</p>
+    </div>
+
+    <!-- TARJETA DE LOGIN -->
+    <div class="bg-white rounded-3xl p-8 shadow-xl border border-slate-200">
+      <h2 class="text-lg font-bold text-slate-900 mb-2">Iniciar Sesión</h2>
+      <p class="text-xs text-slate-500 mb-6">Ingresa tus credenciales de administrador para continuar.</p>
+
+      <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label for="username"
+            class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Usuario</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+              <i class="fas fa-user text-sm"></i>
+            </span>
+            <input type="text" id="username" required value="admin"
+              class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-900/20 focus:border-brand-900 transition">
+          </div>
+        </div>
+
+        <div>
+          <label for="password"
+            class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Contraseña</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+              <i class="fas fa-lock text-sm"></i>
+            </span>
+            <input type="password" id="password" required value=""
+              class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-900/20 focus:border-brand-900 transition">
+            <button type="button" onclick="togglePassword()" aria-label="Mostrar u ocultar contraseña"
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none">
+              <i id="eyeIcon" class="fas fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="loginAlert" class="hidden p-3 rounded-xl text-xs"></div>
+
+        <button type="submit" id="btnLogin"
+          class="w-full py-3.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900">
+          <span>Ingresar al Dashboard</span>
+          <i class="fas fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+
+      <!-- AVISO DE CREDENCIALES CONFIGURADAS (Estructura plana sin tarjeta anidada) -->
+      <div class="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-600">
+        <div class="flex items-center space-x-1.5 font-bold text-slate-800 mb-1.5">
+          <i class="fas fa-key text-emerald-800"></i>
+          <span>Acceso Inicial Configurado:</span>
+        </div>
+        <div class="text-xs text-slate-600 space-y-0.5 font-mono">
+          <div>Usuario: <strong class="text-brand-900">admin</strong></div>
+          <div>Clave: <strong class="text-brand-900">18146211112..*</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENLACE DE RETORNO -->
+    <div class="text-center mt-6">
+      <a href="/"
+        class="text-xs font-semibold text-slate-600 hover:text-brand-900 transition inline-flex items-center space-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 rounded-md p-1">
+        <i class="fas fa-arrow-left text-[10px]"></i>
+        <span>Volver a la pantalla principal</span>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash text-sm';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye text-sm';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const alertBox = document.getElementById('loginAlert');
+      const btn = document.getElementById('btnLogin');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      alertBox.className = 'hidden';
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verificando...';
+
+      try {
+        const res = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alertBox.className = 'p-3 rounded-xl text-xs bg-red-100 text-red-800 border border-red-200 block';
+          alertBox.innerText = data.error || 'Credenciales inválidas.';
+          btn.disabled = false;
+          btn.innerHTML = '<span>Ingresar al Dashboard</span><i class="fas fa-arrow-right text-xs ml-2"></i>';
+          return;
+        }
+
+        // Guardar token y usuario
+        localStorage.setItem('vealo_token', data.token);
+        localStorage.setItem('vealo_user', JSON.stringify(data.user));
+
+        alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 block';
+        alertBox.innerText = '¡Acceso concedido! Redirigiendo al dashboard...';
+
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 500);
+
+      } catch (err) {
+        alertBox.className = 'p-3 rounded-xl text-xs bg-red-100 text-red-800 border border-red-200 block';
+        alertBox.innerText = 'Error al conectar con el servidor.';
+        btn.disabled = false;
+        btn.innerHTML = '<span>Ingresar al Dashboard</span><i class="fas fa-arrow-right text-xs ml-2"></i>';
+      }
+    }
+
+    // Auto-redirección si ya tiene sesión válida
+    (async () => {
+      const token = localStorage.getItem('vealo_token');
+      if (token) {
+        try {
+          const res = await fetch('/api/v1/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            window.location.href = '/admin';
+          }
+        } catch (_) { }
+      }
+    })();
+  </script>
+</body>
+
+</html>

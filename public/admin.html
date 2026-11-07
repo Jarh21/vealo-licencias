@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Administrativo | Grupo Vealo</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#F0FDF4',
+              100: '#DCFCE7',
+              500: '#22C55E',
+              600: '#16A34A',
+              700: '#15803D',
+              800: '#166534',
+              900: '#133E36', // Verde bosque profundo de la referencia KENA
+              dark: '#0C2722'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F8FAFC;
+    }
+    h2 { font-size: 1.875rem; line-height: 1.25; }
+    h3 { font-size: 1.25rem; line-height: 1.35; }
+    h4 { font-size: 1rem; line-height: 1.4; }
+    /* Estilo del scrollbar con tokens de paleta */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #64748b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    #adminSidebar {
+      background-color: #133E36;
+      color: #cbd5e1;
+    }
+    #adminSidebar .sidebar-active {
+      background-color: rgba(255, 255, 255, 0.12);
+      color: #ffffff !important;
+      font-weight: 700;
+    }
+    #adminSidebar .sidebar-active i {
+      color: #34D399 !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-slate-800 selection:bg-emerald-100 selection:text-emerald-900">
+
+  <!-- BACKDROP PARA MÓVILES -->
+  <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden"></div>
+
+  <!-- ======================================================== -->
+  <!-- BARRA LATERAL IZQUIERDA (SIDEBAR ESTILO KENA RESPONSIVE) -->
+  <!-- ======================================================== -->
+  <aside id="adminSidebar" class="w-64 bg-brand-900 text-slate-300 flex flex-col justify-between flex-shrink-0 z-50 fixed md:static inset-y-0 left-0 -translate-x-full md:translate-x-0 transition-transform duration-200">
+    <div>
+      <!-- LOGO / TITULO SUPERIOR -->
+      <div class="h-20 flex items-center justify-between px-6 border-b border-white/10">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl border border-emerald-500/30">
+            <i class="fas fa-layer-group"></i>
+          </div>
+          <div>
+            <div class="font-extrabold text-white text-base tracking-wider">GRUPO VEALO</div>
+            <div class="text-[11px] text-emerald-400 font-medium">Panel Administrativo</div>
+          </div>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-2" aria-label="Cerrar menú">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- MENÚ PRINCIPAL DE OPCIONES -->
+      <div class="p-4 space-y-1.5">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">General</div>
+
+        <!-- 1. OVERVIEW / RESUMEN -->
+        <button onclick="switchTab('overview')" id="tabBtn-overview" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white sidebar-active focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-chart-pie w-5 text-center text-emerald-400"></i>
+          <span>Resumen General</span>
+        </button>
+
+        <!-- 2. CLIENTES Y LICENCIAS (CARTELERA) -->
+        <button onclick="switchTab('clients')" id="tabBtn-clients" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-users w-5 text-center"></i>
+          <span>Clientes & Licencias</span>
+        </button>
+
+        <!-- 3. PAGOS REPORTADOS -->
+        <button onclick="switchTab('payments')" id="tabBtn-payments" 
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-receipt w-5 text-center"></i>
+            <span>Pagos Reportados</span>
+          </div>
+          <span id="badgePendingPayments" class="hidden text-[10px] font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">0</span>
+        </button>
+
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pt-4 py-1">Módulos</div>
+
+        <!-- 4. PLANES Y DURACIONES -->
+        <button onclick="switchTab('plans')" id="tabBtn-plans" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-tags w-5 text-center"></i>
+          <span>Planes de Licencia</span>
+        </button>
+
+        <!-- 5. ADMINISTRADORES -->
+        <button onclick="switchTab('admins')" id="tabBtn-admins" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-user-shield w-5 text-center"></i>
+          <span>Administradores</span>
+        </button>
+
+        <!-- 6. CONFIGURACIÓN DEL SISTEMA -->
+        <button onclick="switchTab('settings')" id="tabBtn-settings" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-sliders-h w-5 text-center"></i>
+          <span>Configuración</span>
+        </button>
+
+        <!-- 7. PROBADOR DE API MÓVIL -->
+        <button onclick="switchTab('api-tester')" id="tabBtn-api-tester" 
+                class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-slate-300 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white">
+          <i class="fas fa-terminal w-5 text-center text-amber-400"></i>
+          <span>Probador API Móvil</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PIE DEL SIDEBAR / SESIÓN -->
+    <div class="p-4 border-t border-white/10 space-y-3">
+      <a href="/" target="_blank" class="flex items-center space-x-2 text-xs text-slate-400 hover:text-white px-2 transition">
+        <i class="fas fa-external-link-alt text-[11px]"></i>
+        <span>Ver Portal Público</span>
+      </a>
+      <button onclick="logout()" class="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-red-300 hover:text-red-100 hover:bg-red-500/20 transition focus-visible:ring-2 focus-visible:ring-red-400">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======================================================== -->
+  <!-- CONTENEDOR CENTRAL DERECHO (HEADER + VISTAS)             -->
+  <!-- ======================================================== -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- BARRA SUPERIOR (HEADER ESTILO KENA CON HAMBURGUESA) -->
+    <header class="h-20 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center">
+        <!-- BOTÓN HAMBURGUESA MÓVIL -->
+        <button onclick="toggleMobileSidebar()" class="md:hidden mr-3 p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-900" aria-label="Abrir menú de navegación">
+          <i class="fas fa-bars text-lg"></i>
+        </button>
+        <div>
+          <h2 id="topGreeting" class="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            ¡Bienvenido de nuevo, Administrador!
+          </h2>
+          <p class="text-xs text-slate-500 hidden sm:block">Control central de licencias móviles para Cobrale, Passnet y Vealo Admin</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- Indicador de base de datos PostgreSQL -->
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>PostgreSQL Conectado</span>
+        </div>
+
+        <!-- Usuario / Avatar -->
+        <div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+          <div class="w-10 h-10 rounded-full bg-brand-900 text-emerald-300 flex items-center justify-center font-bold text-sm shadow">
+            AD
+          </div>
+          <div class="hidden md:block">
+            <div id="topUserName" class="text-xs font-bold text-slate-900">Admin General</div>
+            <div class="text-[10px] text-slate-400">admin@vealo.com</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTENIDO SCROLLABLE -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
+
+      <!-- ==================================================== -->
+      <!-- VISTA 1: OVERVIEW / RESUMEN GENERAL (DISEÑO KENA)    -->
+      <!-- ==================================================== -->
+      <section id="section-overview" class="space-y-6">
+        
+        <!-- TARJETAS DE MÉTRICAS KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- KPI 1: ACTIVAS (VERDE) -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Activas (Verde)</span>
+              </div>
+              <div class="mt-2 text-3xl font-extrabold text-slate-900" id="kpiActivas">0</div>
+              <div class="mt-1 text-xs text-emerald-700 font-semibold flex items-center space-x-1">
+                <i class="fas fa-check-circle"></i>
+                <span>Licencias Vigentes</span>
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+              <i class="fas fa-shield-check"></i>
+            </div>
+          </div>
+
+          <!-- KPI 2: POR VENCER (AMARILLO) -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Por Vencer (Amarillo)</span>
+              </div>
+              <div class="mt-2 text-3xl font-extrabold text-slate-900" id="kpiProximas">0</div>
+              <div class="mt-1 text-xs text-amber-700 font-semibold flex items-center space-x-1">
+                <i class="fas fa-clock"></i>
+                <span id="kpiWarningText">Menos de 7 días</span>
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+          </div>
+
+          <!-- KPI 3: INACTIVAS / VENCIDAS (ROJO) -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Inactivas (Rojo)</span>
+              </div>
+              <div class="mt-2 text-3xl font-extrabold text-slate-900" id="kpiInactivas">0</div>
+              <div class="mt-1 text-xs text-red-700 font-semibold flex items-center space-x-1">
+                <i class="fas fa-ban"></i>
+                <span id="kpiBloqueadasText">Vencidas o Bloqueadas</span>
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl">
+              <i class="fas fa-times-circle"></i>
+            </div>
+          </div>
+
+          <!-- KPI 4: PAGOS PENDIENTES -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pagos por Validar</span>
+              </div>
+              <div class="mt-2 text-3xl font-extrabold text-slate-900" id="kpiPagosPendientes">0</div>
+              <div class="mt-1 text-xs text-blue-700 font-semibold flex items-center space-x-1">
+                <i class="fas fa-dollar-sign"></i>
+                <span id="kpiMontoPendiente">$0.00 por auditar</span>
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+              <i class="fas fa-receipt"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRÁFICOS INTERACTIVOS (ESTILO KENA) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- GRÁFICO 1: DISTRIBUCIÓN POR APLICACIÓN (COBRALE, PASSNET, VEALO ADMIN) -->
+          <div class="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base">Licencias por Aplicación Móvil</h3>
+                <p class="text-xs text-slate-500">Volumen de licencias activas e históricas por plataforma</p>
+              </div>
+              <span class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">Actualizado</span>
+            </div>
+            <div class="h-64">
+              <canvas id="chartApps"></canvas>
+            </div>
+          </div>
+
+          <!-- GRÁFICO 2: SEMÁFORO DE ESTADOS (DONA) -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="font-extrabold text-slate-900 text-base">Semáforo de Licencias</h3>
+              <p class="text-xs text-slate-500 mb-4">Proporción general de estatus</p>
+              <div class="h-52 relative flex items-center justify-center">
+                <canvas id="chartStatus"></canvas>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-slate-100 grid grid-cols-3 text-center text-xs">
+              <div>
+                <div class="font-bold text-emerald-600" id="legendVerde">0</div>
+                <div class="text-[10px] text-slate-500">🟢 Activas</div>
+              </div>
+              <div>
+                <div class="font-bold text-amber-600" id="legendAmarillo">0</div>
+                <div class="text-[10px] text-slate-500">🟡 Alerta</div>
+              </div>
+              <div>
+                <div class="font-bold text-red-600" id="legendRojo">0</div>
+                <div class="text-[10px] text-slate-500">🔴 Inactivas</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ÚLTIMOS REPORTES DE PAGO RECIBIDOS -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-extrabold text-slate-900 text-base">Últimos Pagos Reportados</h3>
+              <p class="text-xs text-slate-500">Transacciones reportadas por usuarios en la pantalla principal</p>
+            </div>
+            <button onclick="switchTab('payments')" class="text-xs font-bold text-emerald-700 hover:underline">
+              Ver Todos los Pagos &rarr;
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="text-slate-500 uppercase tracking-wider border-b border-slate-100 font-bold">
+                <tr>
+                  <th class="py-2.5">Referencia</th>
+                  <th class="py-2.5">Cliente</th>
+                  <th class="py-2.5">Aplicación</th>
+                  <th class="py-2.5">Monto</th>
+                  <th class="py-2.5">Fecha</th>
+                  <th class="py-2.5">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="overviewRecentPayments" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="6" class="py-4 text-center text-slate-400">Cargando pagos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 2: CLIENTES Y LICENCIAS (CARTELERA COMPLETA)   -->
+      <!-- ==================================================== -->
+      <section id="section-clients" class="hidden space-y-6">
+        
+        <!-- CABECERA Y FILTROS -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-slate-900">Cartelera de Clientes y Licencias</h3>
+              <p class="text-xs text-slate-500">Visualiza el estatus en tiempo real de cada cliente y aplicación</p>
+            </div>
+            <button onclick="openModalClienteNuevo()" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition flex items-center space-x-2 focus-visible:ring-2 focus-visible:ring-brand-900">
+              <i class="fas fa-plus"></i>
+              <span>Nuevo Cliente / Licencia</span>
+            </button>
+          </div>
+
+          <!-- BARRA DE BÚSQUEDA Y FILTROS RÁPIDOS -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2">
+            <!-- BUSCADOR -->
+            <div class="md:col-span-5 relative">
+              <label for="clientSearchInput" class="sr-only">Buscar clientes y licencias</label>
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <i class="fas fa-search text-xs"></i>
+              </span>
+              <input type="text" id="clientSearchInput" oninput="debounceLoadClients()"
+                     placeholder="Buscar por nombre, correo, teléfono, clave o app..."
+                     class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-900/20 focus:border-brand-900">
+            </div>
+
+            <!-- FILTRO POR APLICACIÓN -->
+            <div class="md:col-span-4">
+              <label for="clientFilterApp" class="sr-only">Filtrar por aplicación</label>
+              <select id="clientFilterApp" onchange="loadClients()"
+                      class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+                <option value="all">Todas las Apps (Cobrale, Passnet, Vealo Admin)</option>
+                <option value="1">Cobrale</option>
+                <option value="2">Passnet</option>
+                <option value="3">Vealo Admin</option>
+              </select>
+            </div>
+
+            <!-- FILTRO POR SEMÁFORO -->
+            <div class="md:col-span-3">
+              <label for="clientFilterStatus" class="sr-only">Filtrar por semáforo</label>
+              <select id="clientFilterStatus" onchange="loadClients()"
+                      class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+                <option value="all">Todos los Estados</option>
+                <option value="verde">🟢 Solo Activos (Verde)</option>
+                <option value="amarillo">🟡 Próximos a Vencer (Amarillo)</option>
+                <option value="rojo">🔴 Inactivos / Vencidos (Rojo)</option>
+                <option value="bloqueada">🚫 Solo Bloqueadas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA DE CLIENTES Y LICENCIAS -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider border-b border-slate-200 font-bold">
+                <tr>
+                  <th class="py-3.5 px-4">Semáforo</th>
+                  <th class="py-3.5 px-4">Cliente</th>
+                  <th class="py-3.5 px-4">Contacto</th>
+                  <th class="py-3.5 px-4">Aplicación</th>
+                  <th class="py-3.5 px-4">Código Licencia</th>
+                  <th class="py-3.5 px-4">Vencimiento</th>
+                  <th class="py-3.5 px-4 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="clientsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-slate-400">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Cargando clientes y licencias...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 3: PAGOS REPORTADOS                            -->
+      <!-- ==================================================== -->
+      <section id="section-payments" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-extrabold text-slate-900">Validación de Pagos Reportados</h3>
+            <p class="text-xs text-slate-500">Los usuarios reportan su pago y se activa la licencia al instante. Aquí puedes aprobar o rechazar con reversión automática.</p>
+          </div>
+          <button onclick="loadPayments()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center space-x-2">
+            <i class="fas fa-sync-alt"></i>
+            <span>Actualizar</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider border-b border-slate-200 font-bold">
+                <tr>
+                  <th class="py-3.5 px-4">Referencia</th>
+                  <th class="py-3.5 px-4">Cliente</th>
+                  <th class="py-3.5 px-4">App</th>
+                  <th class="py-3.5 px-4">Monto</th>
+                  <th class="py-3.5 px-4">Fecha Reporte</th>
+                  <th class="py-3.5 px-4">Estado</th>
+                  <th class="py-3.5 px-4 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-slate-400">Cargando pagos...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 4: PLANES Y LICENCIAS                          -->
+      <!-- ==================================================== -->
+      <section id="section-plans" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-extrabold text-slate-900">Módulo de Licencias y Planes</h3>
+            <p class="text-xs text-slate-500">Configura los planes de suscripción, duración en días y precios para los clientes</p>
+          </div>
+          <button onclick="openModalPlanNuevo()" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Nuevo Plan</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="plansGrid">
+          <!-- Se cargan dinámicamente -->
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 5: ADMINISTRADORES                             -->
+      <!-- ==================================================== -->
+      <section id="section-admins" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-extrabold text-slate-900">Gestión de Administradores</h3>
+            <p class="text-xs text-slate-500">Usuarios con credenciales de acceso al dashboard de Grupo Vealo</p>
+          </div>
+          <button onclick="openModalAdminNuevo()" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition flex items-center space-x-2">
+            <i class="fas fa-user-plus"></i>
+            <span>Agregar Administrador</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider border-b border-slate-200 font-bold">
+              <tr>
+                <th class="py-3.5 px-4">Usuario</th>
+                <th class="py-3.5 px-4">Nombre</th>
+                <th class="py-3.5 px-4">Fecha Creación</th>
+                <th class="py-3.5 px-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="adminsTableBody" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="4" class="py-8 text-center text-slate-400">Cargando administradores...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 6: CONFIGURACIÓN DEL SISTEMA                   -->
+      <!-- ==================================================== -->
+      <section id="section-settings" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm max-w-3xl">
+          <div class="mb-6">
+            <h3 class="text-xl font-extrabold text-slate-900">Configuración Global del Sistema</h3>
+            <p class="text-xs text-slate-500 mt-1">Modifica los días de prueba automática y parámetros de alertas</p>
+          </div>
+
+          <form id="formSettings" onsubmit="handleSaveSettings(event)" class="space-y-5">
+            <div>
+              <label for="cfgTrialDays" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Días de Prueba Inicial (Registro Nuevo)
+              </label>
+              <input type="number" id="cfgTrialDays" required min="1" max="365"
+                     class="w-full sm:w-64 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+              <span class="text-[11px] text-slate-400 mt-1 block">
+                Al registrarse un nuevo usuario, se le otorgará esta cantidad exacta de días de cortesía en estado activo.
+              </span>
+            </div>
+
+            <div>
+              <label for="cfgWarningDays" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Umbral de Alerta Semáforo Amarillo (Días Restantes)
+              </label>
+              <input type="number" id="cfgWarningDays" required min="1" max="30"
+                     class="w-full sm:w-64 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+              <span class="text-[11px] text-slate-400 mt-1 block">
+                Cuando a una licencia le queden estos días o menos, se resaltará en 🟡 Amarillo (Próximo a Vencer).
+              </span>
+            </div>
+
+            <div>
+              <label for="cfgWhatsapp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                WhatsApp de Soporte / Notificaciones
+              </label>
+              <input type="text" id="cfgWhatsapp" required
+                     class="w-full sm:w-80 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+            </div>
+
+            <div id="settingsAlert" class="hidden p-3 rounded-xl text-xs"></div>
+
+            <button type="submit" class="px-6 py-3 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-sm shadow transition focus-visible:ring-2 focus-visible:ring-brand-900">
+              Guardar Cambios
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VISTA 7: PROBADOR DE API MÓVIL                       -->
+      <!-- ==================================================== -->
+      <section id="section-api-tester" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm max-w-4xl">
+          <div class="mb-4">
+            <h3 class="text-xl font-extrabold text-slate-900">Probador de API Móvil (Status 1 / 0)</h3>
+            <p class="text-xs text-slate-500 mt-1">
+              Simula exactamente la consulta que hará la aplicación móvil para validar si la licencia está Activa (1) o Inactiva (0).
+            </p>
+          </div>
+
+          <div class="bg-slate-900 text-slate-200 p-4 rounded-2xl font-mono text-xs mb-6 overflow-x-auto">
+            <div class="text-emerald-400 font-bold mb-1">// Endpoint consumido por la app móvil:</div>
+            <div>GET /api/v1/license/check?email=<span class="text-amber-300">{correo}</span>&app=<span class="text-amber-300">{nombre_app}</span></div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="apiTestEmail" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico</label>
+              <input type="email" id="apiTestEmail" value="carlos@ejemplo.com"
+                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+            </div>
+            <div>
+              <label for="apiTestApp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Aplicación</label>
+              <select id="apiTestApp" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-900/20">
+                <option value="Cobrale">Cobrale</option>
+                <option value="Passnet">Passnet</option>
+                <option value="Vealo Admin">Vealo Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <button onclick="testMobileApi()" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition flex items-center space-x-2 focus-visible:ring-2 focus-visible:ring-brand-900">
+            <i class="fas fa-play text-xs text-emerald-400"></i>
+            <span>Ejecutar Consulta de Prueba</span>
+          </button>
+
+          <!-- RESULTADO JSON -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Respuesta HTTP Retornada:</span>
+              <span id="apiTestBadge" class="text-xs font-bold px-2 py-0.5 rounded-full"></span>
+            </div>
+            <pre id="apiTestResponse" class="bg-slate-950 text-emerald-400 p-4 rounded-2xl font-mono text-xs overflow-x-auto max-h-60 border border-slate-800">
+{
+  "mensaje": "Presiona 'Ejecutar Consulta de Prueba' para probar la API..."
+}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EDITAR CLIENTE Y LICENCIA                         -->
+  <!-- ======================================================== -->
+  <div id="modalEditClient" role="dialog" aria-modal="true" aria-labelledby="editClientModalTitle"
+       class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100">
+      <button onclick="closeModalAdmin('modalEditClient')" aria-label="Cerrar edición"
+              class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <h3 id="editClientModalTitle" class="text-xl font-extrabold text-slate-900 mb-1">Editar Cliente y Licencia</h3>
+      <p class="text-xs text-slate-500 mb-5">Modifica los datos personales o la fecha de expiración</p>
+
+      <form id="formEditClient" onsubmit="handleSaveEditClient(event)" class="space-y-4">
+        <input type="hidden" id="editClientId">
+
+        <div>
+          <label for="editNombre" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo</label>
+          <input type="text" id="editNombre" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="editEmail" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico</label>
+            <input type="email" id="editEmail" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+          </div>
+          <div>
+            <label for="editTelefono" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Teléfono</label>
+            <input type="text" id="editTelefono" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+          </div>
+        </div>
+
+        <div>
+          <label for="editFechaFin" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Fecha de Expiración</label>
+          <input type="datetime-local" id="editFechaFin" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-brand-900">
+        </div>
+
+        <div>
+          <label for="editEstado" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Estado de Licencia</label>
+          <select id="editEstado" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+            <option value="activa">🟢 Activa</option>
+            <option value="inactiva">🔴 Inactiva / Vencida</option>
+            <option value="bloqueada">🚫 Bloqueada por Administración</option>
+          </select>
+        </div>
+
+        <div id="editAlert" class="hidden p-3 rounded-xl text-xs"></div>
+
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModalAdmin('modalEditClient')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition focus-visible:ring-2 focus-visible:ring-brand-900">
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: NUEVO CLIENTE MANUAL                              -->
+  <!-- ======================================================== -->
+  <div id="modalNewClient" role="dialog" aria-modal="true" aria-labelledby="newClientModalTitle"
+       class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100">
+      <button onclick="closeModalAdmin('modalNewClient')" aria-label="Cerrar nuevo cliente"
+              class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <h3 id="newClientModalTitle" class="text-xl font-extrabold text-slate-900 mb-1">Crear Cliente y Licencia</h3>
+      <p class="text-xs text-slate-500 mb-5">Registra manualmente un cliente desde el panel</p>
+
+      <form id="formNewClient" onsubmit="handleCreateClient(event)" class="space-y-4">
+        <div>
+          <label for="newNombre" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo</label>
+          <input type="text" id="newNombre" required placeholder="Ej: Roberto Gómez" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="newEmail" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo</label>
+            <input type="email" id="newEmail" required placeholder="cliente@correo.com" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+          </div>
+          <div>
+            <label for="newTelefono" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Teléfono</label>
+            <input type="text" id="newTelefono" required placeholder="+58 412 000-0000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="newApp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Aplicación</label>
+            <select id="newApp" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+              <option value="1">Cobrale</option>
+              <option value="2">Passnet</option>
+              <option value="3">Vealo Admin</option>
+            </select>
+          </div>
+          <div>
+            <label for="newDias" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Días de Licencia</label>
+            <input type="number" id="newDias" required value="30" min="1" max="1000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+          </div>
+        </div>
+
+        <div id="newClientAlert" class="hidden p-3 rounded-xl text-xs"></div>
+
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModalAdmin('modalNewClient')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-brand-900 hover:bg-brand-dark text-white rounded-xl font-bold text-xs shadow transition focus-visible:ring-2 focus-visible:ring-brand-900">
+            Crear Licencia
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: MOTIVO DE RECHAZO DE PAGO                         -->
+  <!-- ======================================================== -->
+  <div id="modalRejectPayment" role="dialog" aria-modal="true" aria-labelledby="rejectPaymentModalTitle"
+       class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100">
+      <h3 id="rejectPaymentModalTitle" class="text-lg font-extrabold text-slate-900 mb-1">Rechazar Pago</h3>
+      <p class="text-xs text-slate-500 mb-4">La licencia del usuario será revertida y bloqueada automáticamente.</p>
+      
+      <input type="hidden" id="rejectPaymentId">
+      <div>
+        <label for="rejectMotivo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Motivo del Rechazo</label>
+        <textarea id="rejectMotivo" rows="3" required placeholder="Ej: Comprobante no reflejado en cuenta bancaria"
+                  class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-900/20"></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-4">
+        <button onclick="closeModalAdmin('modalRejectPayment')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs">
+          Cancelar
+        </button>
+        <button onclick="confirmRejectPayment()" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow focus-visible:ring-2 focus-visible:ring-red-500">
+          Rechazar y Bloquear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT JS DEL DASHBOARD -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>
