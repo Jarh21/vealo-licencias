@@ -7,44 +7,51 @@ const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:3174
 async function initDatabase() {
   console.log('--- Iniciando configuración de Base de Datos PostgreSQL ---');
 
+  const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+
   // Parse connection string to get db name and connection to postgres maintenance db
   const url = new URL(connectionString);
   const targetDbName = url.pathname.replace(/^\//, '') || 'licencias_vealo';
 
-  // Build maintenance connection URL to 'postgres'
-  const maintenanceUrl = new URL(connectionString);
-  maintenanceUrl.pathname = '/postgres';
+  // Solo intentamos crear la BD localmente en PostgreSQL estándar
+  if (isLocal) {
+    const maintenanceUrl = new URL(connectionString);
+    maintenanceUrl.pathname = '/postgres';
 
-  const maintenanceClient = new Client({
-    connectionString: maintenanceUrl.toString(),
-  });
+    const maintenanceClient = new Client({
+      connectionString: maintenanceUrl.toString(),
+    });
 
-  try {
-    await maintenanceClient.connect();
-    console.log('Conectado a PostgreSQL (postgres)...');
-
-    const checkDbRes = await maintenanceClient.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [targetDbName]
-    );
-
-    if (checkDbRes.rowCount === 0) {
-      console.log(`Base de datos "${targetDbName}" no existe. Creándola...`);
-      await maintenanceClient.query(`CREATE DATABASE "${targetDbName}"`);
-      console.log(`Base de datos "${targetDbName}" creada exitosamente.`);
-    } else {
-      console.log(`Base de datos "${targetDbName}" ya existe.`);
-    }
-  } catch (err) {
-    console.warn('Nota al verificar/crear base de datos:', err.message);
-  } finally {
     try {
-      await maintenanceClient.end();
-    } catch (_) {}
+      await maintenanceClient.connect();
+      console.log('Conectado a PostgreSQL (postgres)...');
+
+      const checkDbRes = await maintenanceClient.query(
+        `SELECT 1 FROM pg_database WHERE datname = $1`,
+        [targetDbName]
+      );
+
+      if (checkDbRes.rowCount === 0) {
+        console.log(`Base de datos "${targetDbName}" no existe. Creándola...`);
+        await maintenanceClient.query(`CREATE DATABASE "${targetDbName}"`);
+        console.log(`Base de datos "${targetDbName}" creada exitosamente.`);
+      } else {
+        console.log(`Base de datos "${targetDbName}" ya existe.`);
+      }
+    } catch (err) {
+      console.warn('Nota al verificar/crear base de datos:', err.message);
+    } finally {
+      try {
+        await maintenanceClient.end();
+      } catch (_) {}
+    }
   }
 
   // Connect to target database
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    ssl: isLocal ? false : { rejectUnauthorized: false }
+  });
 
   try {
     const client = await pool.connect();
